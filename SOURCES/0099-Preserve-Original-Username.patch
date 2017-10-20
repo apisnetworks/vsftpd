@@ -1,0 +1,59 @@
+diff -Nur vsftpd-3.0.3-orig/logging.c vsftpd-3.0.3/logging.c
+--- vsftpd-3.0.3-orig/logging.c	2017-10-20 00:02:08.241763741 -0400
++++ vsftpd-3.0.3/logging.c	2017-10-20 00:02:57.113623917 -0400
+@@ -250,7 +250,7 @@
+     {
+       str_append_text(p_str, "r ");
+     }
+-    str_append_str(p_str, &p_sess->user_str);
++    str_append_str(p_str, &p_sess->orig_user_str);
+   }
+   str_append_char(p_str, ' ');
+   /* Service name, authentication method, authentication user id */
+@@ -282,10 +282,10 @@
+     str_append_text(p_str, "] ");
+   }
+   /* User */
+-  if (!str_isempty(&p_sess->user_str))
++  if (!str_isempty(&p_sess->orig_user_str))
+   {
+     str_append_char(p_str, '[');
+-    str_append_str(p_str, &p_sess->user_str);
++    str_append_str(p_str, &p_sess->orig_user_str);
+     str_append_text(p_str, "] ");
+   }
+   /* And the action */
+diff -Nur vsftpd-3.0.3-orig/main.c vsftpd-3.0.3/main.c
+--- vsftpd-3.0.3-orig/main.c	2017-10-20 00:02:08.197763866 -0400
++++ vsftpd-3.0.3/main.c	2017-10-20 00:03:17.492565612 -0400
+@@ -42,7 +42,7 @@
+     /* Data connection */
+     -1, 0, -1, 0, 0, 0, 0, 0,
+     /* Login */
+-    1, 0, INIT_MYSTR, INIT_MYSTR,
++    1, 0, INIT_MYSTR, INIT_MYSTR, INIT_MYSTR,
+     /* Protocol state */
+     0, 0, 1, INIT_MYSTR, 0, 0,
+     /* HTTP hacks */
+diff -Nur vsftpd-3.0.3-orig/session.h vsftpd-3.0.3/session.h
+--- vsftpd-3.0.3-orig/session.h	2017-10-20 00:02:08.198763864 -0400
++++ vsftpd-3.0.3/session.h	2017-10-20 00:03:33.270520471 -0400
+@@ -39,6 +39,7 @@
+   int is_guest;
+   struct mystr user_str;
+   struct mystr anon_pass_str;
++  struct mystr orig_user_str;
+ 
+   /* Details of the FTP protocol state */
+   filesize_t upload_size;
+diff -Nur vsftpd-3.0.3-orig/twoprocess.c vsftpd-3.0.3/twoprocess.c
+--- vsftpd-3.0.3-orig/twoprocess.c	2017-10-20 00:02:08.186763898 -0400
++++ vsftpd-3.0.3/twoprocess.c	2017-10-20 00:04:41.030326608 -0400
+@@ -324,6 +324,7 @@
+       p_sess->control_use_ssl = 0;
+       p_sess->data_use_ssl = 0;
+     }
++    str_copy(&p_sess->orig_user_str, &p_sess->user_str);
+     e_login_result = vsf_privop_do_login(p_sess, &password_str);
+     str_free(&password_str);
+   }
