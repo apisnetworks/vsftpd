@@ -94,7 +94,7 @@ install -m 600 vsftpd.conf $RPM_BUILD_ROOT%{_sysconfdir}/vsftpd/vsftpd.conf
 install -m 644 vsftpd.conf.5 $RPM_BUILD_ROOT/%{_mandir}/man5/
 install -m 644 vsftpd.8 $RPM_BUILD_ROOT/%{_mandir}/man8/
 install -m 644 RedHat/vsftpd.log $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/vsftpd
-install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/vsftpd
+install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/ftp
 install -m 600 %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/vsftpd/ftpusers
 install -m 600 %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/vsftpd/user_list
 install -m 744 %{SOURCE6} $RPM_BUILD_ROOT%{_sysconfdir}/vsftpd/vsftpd_conf_migrate.sh
@@ -125,7 +125,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_var}/ftp/pub
 %config(noreplace) %{_sysconfdir}/vsftpd/ftpusers
 %config(noreplace) %{_sysconfdir}/vsftpd/user_list
 %config(noreplace) %{_sysconfdir}/vsftpd/vsftpd.conf
-%config(noreplace) %{_sysconfdir}/pam.d/vsftpd
+%config(noreplace) %{_sysconfdir}/pam.d/ftp
 %config(noreplace) %{_sysconfdir}/logrotate.d/vsftpd
 %doc FAQ INSTALL BUGS AUDIT Changelog LICENSE README README.security REWARD
 %doc SPEED TODO BENCHMARKS COPYING SECURITY/ EXAMPLE/ TUNING SIZE vsftpd.xinetd
