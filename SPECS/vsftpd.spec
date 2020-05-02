@@ -2,8 +2,9 @@
 
 Name:    vsftpd
 Version: 3.0.3
-Release: 8.apnscp%{?dist}
+Release: 28%{?dist}
 Summary: Very Secure Ftp Daemon
+Epoch:   1
 
 Group:    System Environment/Daemons
 # OpenSSL link exception
@@ -24,8 +25,8 @@ BuildRequires: pam-devel
 BuildRequires: libcap-devel
 BuildRequires: openssl-devel
 BuildRequires: systemd
-BuildRequires: tcp_wrappers-devel
 BuildRequires: git
+BuildRequires: gcc
 
 Requires: logrotate
 
@@ -65,7 +66,31 @@ Patch33: 0033-Introduce-TLSv1.1-and-TLSv1.2-options.patch
 Patch34: 0034-Turn-off-seccomp-sandbox-because-it-is-too-strict.patch
 Patch35: 0035-Modify-DH-enablement-patch-to-build-with-OpenSSL-1.1.patch
 Patch36: 0036-Redefine-VSFTP_COMMAND_FD-to-1.patch
+Patch37: 0037-Document-the-relationship-of-text_userdb_names-and-c.patch
+Patch38: 0038-Document-allow_writeable_chroot-in-the-man-page.patch
+Patch39: 0039-Improve-documentation-of-ASCII-mode-in-the-man-page.patch
+Patch40: 0040-Use-system-wide-crypto-policy.patch
+Patch41: 0041-Document-the-new-default-for-ssl_ciphers-in-the-man-.patch
+Patch42: 0042-When-handling-FEAT-command-check-ssl_tlsv1_1-and-ssl.patch
+Patch43: 0043-Enable-only-TLSv1.2-by-default.patch
+Patch44: 0044-Disable-anonymous_enable-in-default-config-file.patch
+Patch45: 0045-Expand-explanation-of-ascii_-options-behaviour-in-ma.patch
+Patch46: 0046-vsftpd.conf-Refer-to-the-man-page-regarding-the-asci.patch
+Patch47: 0047-Disable-tcp_wrappers-support.patch
+Patch48: 0048-Fix-default-value-of-strict_ssl_read_eof-in-man-page.patch
+Patch49: 0049-Add-new-filename-generation-algorithm-for-STOU-comma.patch
+Patch50: 0050-Don-t-link-with-libnsl.patch
+Patch51: 0051-Improve-documentation-of-better_stou-in-the-man-page.patch
+Patch52: 0052-Fix-rDNS-with-IPv6.patch
+Patch53: 0053-Always-do-chdir-after-chroot.patch
+Patch54: 0054-vsf_sysutil_rcvtimeo-Check-return-value-of-setsockop.patch
+Patch55: 0055-vsf_sysutil_get_tz-Check-the-return-value-of-syscall.patch
+Patch56: 0056-Log-die-calls-to-syslog.patch
+Patch57: 0057-Improve-error-message-when-max-number-of-bind-attemp.patch
+Patch58: 0058-Make-the-max-number-of-bind-retries-tunable.patch
+Patch59: 0059-Fix-SEGFAULT-when-running-in-a-container-as-PID-1.patch
 Patch99: 0099-Preserve-Original-Username.patch
+
 %description
 vsftpd is a Very Secure FTP daemon. It was written completely from
 scratch.
@@ -116,7 +141,6 @@ mkdir -p $RPM_BUILD_ROOT/%{_var}/ftp/pub
 %systemd_postun_with_restart vsftpd.service 
 
 %files
-%defattr(-,root,root,-)
 %{_unitdir}/*
 %{_generatorsdir}/*
 %{_sbindir}/vsftpd
@@ -134,8 +158,83 @@ mkdir -p $RPM_BUILD_ROOT/%{_var}/ftp/pub
 %{_var}/ftp
 
 %changelog
-* Thu Oct 19 2017 Matt Saladna <matt@apisnetworks.com> - 3.0.3-8.apnscp
-- Add patch to preserve original username for use with logging
+* Wed Jul 25 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-28
+- Rebuilt, switched to SHA512 source tarball hash
+
+* Wed Jul 25 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-27
+- Fix a segfault when running as PID 1
+
+* Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-26
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Tue Jun 19 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-25
+- Add config option log_die allowing to pass error messages to syslog
+- Add config option bind_retries allowing to change the max number
+- of attempts to find a listening port for the PASV/EPSV command
+- Resolves: rhbz#1318198
+
+* Fri Jun 01 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-24
+- Fix filename expansion in vsftpd_conf_migrate.sh ... again
+
+* Thu May 10 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-23
+- Fix issues found by Coverity Scan
+
+* Fri Apr 27 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-22
+- Fix filename expansion in vsftpd_conf_migrate.sh
+
+* Thu Apr 05 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-21
+- Improve documentation of better_stou in the man page
+
+* Mon Feb 19 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-20
+- Add gcc to BuildRequires
+
+* Tue Feb 06 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-19
+- Don't link with libnsl
+
+* Tue Feb 06 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-18
+- Add a new config option 'better_stou', which can be used to enable
+  a better algorithm for generating unique filenames for the STOU command.
+- Resolves: rhbz#1479237
+
+* Wed Jan 10 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-17
+- Add BuildRequires: libnsl2-devel
+- https://fedoraproject.org/wiki/Changes/NISIPv6
+
+* Fri Jan 05 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-16
+- Disable tcp_wrappers support
+- Resolves: rhbz#1518796
+- Fix default value of strict_ssl_read_eof in man page
+
+* Tue Jan 02 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-15
+- Expand the explanation of the ascii_* options behaviour
+
+* Tue Jan 02 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-14
+- Disable anonymous_enable in default config file
+- Resolves: rhbz#1338637
+
+* Thu Dec 21 2017 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-13
+- Document the new default for ssl_ciphers in the man page
+- Related: rhbz#1483970
+- When handling FEAT command, check ssl_tlsv1_1 and ssl_tlsv1_2
+- Patch was written by Martin Sehnoutka
+- Resolves: rhbz#1432054
+- Disable TLSv1 and TLSv1.1 - enable only TLSv1.2 by default
+
+* Thu Dec 21 2017 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-12
+- Use system wide crypto policy
+- Resolves: rhbz#1483970
+
+* Fri Nov 24 2017 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-11
+- Improve documentation of ASCII mode in the man page
+- Resolves: rhbz#1139409
+
+* Tue Oct 31 2017 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-10
+- Document allow_writeable_chroot in the man page
+- Resolves: rhbz#1507143
+
+* Thu Oct 26 2017 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-9
+- Document the relationship of text_userdb_names and chroot_local_user
+- Resolves: rhbz#1439724
 
 * Tue Sep 05 2017 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-8
 - Build against OpenSSL 1.1
