@@ -1,0 +1,135 @@
+diff --git a/parseconf.c b/parseconf.c
+--- a/parseconf.c
++++ b/parseconf.c
+@@ -180,6 +180,9 @@ parseconf_str_array[] =
+   { "email_password_file", &tunable_email_password_file },
+   { "rsa_cert_file", &tunable_rsa_cert_file },
+   { "dsa_cert_file", &tunable_dsa_cert_file },
++  { "dh_param_file", &tunable_dh_param_file },
++  { "ecdh_param_file", &tunable_ecdh_param_file },
++  { "ssl_ciphersuites", &tunable_ssl_ciphersuites },
+   { "ssl_ciphers", &tunable_ssl_ciphers },
+   { "rsa_private_key_file", &tunable_rsa_private_key_file },
+   { "dsa_private_key_file", &tunable_dsa_private_key_file },
+diff --git a/ssl.c b/ssl.c
+--- a/ssl.c
++++ b/ssl.c
+@@ -130,6 +130,30 @@ ssl_init(struct vsf_session* p_sess)
+         die("SSL: cannot load DSA private key");
+       }
+     }
++    if (tunable_dh_param_file)
++    {
++      BIO *bio;
++      EVP_PKEY *dh_params = NULL;
++      if ((bio = BIO_new_file(tunable_dh_param_file, "r")) == NULL)
++      {
++        die("SSL: cannot load custom DH params");
++      }
++      dh_params = PEM_read_bio_Parameters(bio, NULL);
++      BIO_free(bio);
++      if (dh_params == NULL || !SSL_CTX_set0_tmp_dh_pkey(p_ctx, dh_params))
++      {
++        die("SSL: setting custom DH params failed");
++      }
++    }
++    else
++    {
++      SSL_CTX_set_dh_auto(p_ctx, 1);
++    }
++    if (tunable_ssl_ciphersuites &&
++        SSL_CTX_set_ciphersuites(p_ctx, tunable_ssl_ciphersuites) != 1)
++    {
++      die("SSL: could not set ciphersuites");
++    }
+     if (tunable_ssl_ciphers &&
+         SSL_CTX_set_cipher_list(p_ctx, tunable_ssl_ciphers) != 1)
+     {
+@@ -139,15 +163,6 @@ ssl_init(struct vsf_session* p_sess)
+     {
+       die("SSL: RNG is not seeded");
+     }
+-    {
+-      EC_KEY* key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+-      if (key == NULL)
+-      {
+-        die("SSL: failed to get curve p256");
+-      }
+-      SSL_CTX_set_tmp_ecdh(p_ctx, key);
+-      EC_KEY_free(key);
+-    }
+     if (tunable_ssl_request_cert)
+     {
+       verify_option |= SSL_VERIFY_PEER;
+diff --git a/tunables.c b/tunables.c
+--- a/tunables.c
++++ b/tunables.c
+@@ -143,6 +143,9 @@ const char* tunable_user_sub_token;
+ const char* tunable_email_password_file;
+ const char* tunable_rsa_cert_file;
+ const char* tunable_dsa_cert_file;
++const char* tunable_dh_param_file;
++const char* tunable_ecdh_param_file;
++const char* tunable_ssl_ciphersuites;
+ const char* tunable_ssl_ciphers;
+ const char* tunable_rsa_private_key_file;
+ const char* tunable_dsa_private_key_file;
+@@ -295,6 +298,9 @@ tunables_load_defaults()
+   install_str_setting("/usr/share/ssl/certs/vsftpd.pem",
+                       &tunable_rsa_cert_file);
+   install_str_setting(0, &tunable_dsa_cert_file);
++  install_str_setting(0, &tunable_dh_param_file);
++  install_str_setting(0, &tunable_ecdh_param_file);
++  install_str_setting(0, &tunable_ssl_ciphersuites);
+   install_str_setting(0, &tunable_ssl_ciphers);
+   install_str_setting(0, &tunable_rsa_private_key_file);
+   install_str_setting(0, &tunable_dsa_private_key_file);
+diff --git a/tunables.h b/tunables.h
+--- a/tunables.h
++++ b/tunables.h
+@@ -145,6 +145,9 @@ extern const char* tunable_user_sub_token;
+ extern const char* tunable_email_password_file;
+ extern const char* tunable_rsa_cert_file;
+ extern const char* tunable_dsa_cert_file;
++extern const char* tunable_dh_param_file;
++extern const char* tunable_ecdh_param_file;
++extern const char* tunable_ssl_ciphersuites;
+ extern const char* tunable_ssl_ciphers;
+ extern const char* tunable_rsa_private_key_file;
+ extern const char* tunable_dsa_private_key_file;
+diff --git a/vsftpd.conf.5 b/vsftpd.conf.5
+--- a/vsftpd.conf.5
++++ b/vsftpd.conf.5
+@@ -1029,6 +1029,32 @@
+
+ Default: /usr/share/empty
+ .TP
++.B dh_param_file
++This option specifies the location of custom parameters used for
++ephemeral Diffie-Hellman key exchange in TLS.
++
++Default: (none - use built-in parameters appropriate for certificate key size)
++.TP
++.B ecdh_param_file
++This option specifies the location of custom curve parameters for ephemeral
++Elliptic Curve Diffie-Hellman (ECDH) key exchange in TLS.
++
++This option is deprecated and has no effect.
++
++Default: (none - enable all supported curve groups)
++.TP
++.B ssl_ciphersuites
++This option can be used to select which TLS ciphersuites vsftpd will allow for
++encrypted TLS connections with TLSv1.3. See the
++.BR openssl-ciphers
++man page for further details.
++
++By default, the system-wide crypto policy is used. See
++.BR update-crypto-policies(8)
++for further details.
++
++Default: (none - system-wide crypto policy is followed)
++.TP
+ .B ssl_ciphers
+ This option can be used to select which TLS ciphers vsftpd will allow for
+ encrypted TLS connections. See the

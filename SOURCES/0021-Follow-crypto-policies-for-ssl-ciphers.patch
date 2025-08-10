@@ -1,0 +1,39 @@
+diff --git a/tunables.c b/tunables.c
+--- a/tunables.c
++++ b/tunables.c
+@@ -295,7 +295,7 @@
+   install_str_setting("/usr/share/ssl/certs/vsftpd.pem",
+                       &tunable_rsa_cert_file);
+   install_str_setting(0, &tunable_dsa_cert_file);
+-  install_str_setting("ECDHE-RSA-AES256-GCM-SHA384", &tunable_ssl_ciphers);
++  install_str_setting(0, &tunable_ssl_ciphers);
+   install_str_setting(0, &tunable_rsa_private_key_file);
+   install_str_setting(0, &tunable_dsa_private_key_file);
+   install_str_setting(0, &tunable_ca_certs_file);
+diff --git a/vsftpd.conf.5 b/vsftpd.conf.5
+--- a/vsftpd.conf.5
++++ b/vsftpd.conf.5
+@@ -1030,14 +1030,16 @@
+ Default: /usr/share/empty
+ .TP
+ .B ssl_ciphers
+-This option can be used to select which SSL ciphers vsftpd will allow for
+-encrypted SSL connections. See the
+-.BR ciphers
++This option can be used to select which TLS ciphers vsftpd will allow for
++encrypted TLS connections. See the
++.BR openssl-ciphers
+-man page for further details. Note that restricting ciphers can be a useful
+-security precaution as it prevents malicious remote parties forcing a cipher
+-which they have found problems with.
++man page for further details.
++
++By default, the system-wide crypto policy is used. See
++.BR update-crypto-policies(8)
++for further details.
+ 
+-Default: DES-CBC3-SHA
++Default: (none - system-wide crypto policy is followed)
+ .TP
+ .B ssl_sni_hostname
+ If set, SSL connections will be rejected unless the SNI hostname in the

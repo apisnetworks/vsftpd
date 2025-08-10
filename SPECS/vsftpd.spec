@@ -2,12 +2,12 @@
 
 Name:    vsftpd
 Version: 3.0.5
-Release: 6%{?dist}
-Summary: Very Secure Ftp Daemon
+Release: 10%{?dist}
 Epoch: 1
+Summary: Very Secure Ftp Daemon
 
 # OpenSSL link exception
-License:  GPLv2 with exceptions
+License:  GPL-2.0-only WITH vsftpd-openssl-exception
 URL:      https://security.appspot.com/vsftpd.html
 Source0:  https://security.appspot.com/downloads/%{name}-%{version}.tar.gz
 Source1:  vsftpd.xinetd
@@ -50,8 +50,8 @@ Patch17: 0017-Fix-an-issue-with-timestamps-during-DST.patch
 Patch18: 0018-Change-the-default-log-file-in-configuration.patch
 Patch19: 0019-Introduce-reverse_lookup_enable-option.patch
 Patch20: 0020-Use-unsigned-int-for-uid-and-gid-representation.patch
-Patch21: 0021-Introduce-support-for-DHE-based-cipher-suites.patch
-Patch22: 0022-Introduce-support-for-EDDHE-based-cipher-suites.patch
+Patch21: 0021-Follow-crypto-policies-for-ssl-ciphers.patch
+Patch22: 0022-Add-options-for-TLS-ciphersuites-and-DH-params.patch
 Patch23: 0023-Add-documentation-for-isolate_-options.-Correct-defa.patch
 Patch24: 0024-Introduce-new-return-value-450.patch
 Patch25: 0025-Improve-local_max_rate-option.patch
@@ -67,8 +67,6 @@ Patch36: 0036-Redefine-VSFTP_COMMAND_FD-to-1.patch
 Patch37: 0037-Document-the-relationship-of-text_userdb_names-and-c.patch
 Patch38: 0038-Document-allow_writeable_chroot-in-the-man-page.patch
 Patch39: 0039-Improve-documentation-of-ASCII-mode-in-the-man-page.patch
-Patch40: 0040-Use-system-wide-crypto-policy.patch
-Patch41: 0041-Document-the-new-default-for-ssl_ciphers-in-the-man-.patch
 Patch42: 0042-When-handling-FEAT-command-check-ssl_tlsv1_1-and-ssl.patch
 Patch44: 0044-Disable-anonymous_enable-in-default-config-file.patch
 Patch45: 0045-Expand-explanation-of-ascii_-options-behaviour-in-ma.patch
@@ -95,11 +93,10 @@ Patch67: 0001-Fix-timestamp-handling-in-MDTM.patch
 Patch68: 0002-Drop-an-unused-global-variable.patch
 Patch69: 0001-Remove-a-hint-about-the-ftp_home_dir-SELinux-boolean.patch
 Patch70: fix-str_open.patch
-Patch71: vsftpd-3.0.3-enable_wc_logs-replace_unprintable_with_hex.patch
-Patch72: vsftpd-3.0.5-use-old-tlsv-options.patch
-Patch73: vsftpd-3.0.5-replace-old-network-addr-functions.patch
-Patch74: vsftpd-3.0.5-replace-deprecated-openssl-functions.patch
-Patch75: vsftpd-3.0.5-add-option-for-tlsv1.3-ciphersuites.patch
+Patch71: vsftpd-3.0.5-enable_wc_logs-replace_unprintable_with_hex.patch
+Patch72: vsftpd-3.0.5-replace-old-network-addr-functions.patch
+Patch73: vsftpd-3.0.5-replace-deprecated-openssl-functions.patch
+Patch75: vsftpd-3.0.5-use-old-tlsv-options.patch
 Patch99: 0099-Preserve-Original-Username.patch
 
 %description
@@ -170,58 +167,73 @@ mkdir -p $RPM_BUILD_ROOT/%{_var}/ftp/pub
 %{_var}/ftp
 
 %changelog
-* Tue Aug 20 2024 Tomas Korbar <tkorbar@redhat.com> - 3.0.5-6
+* Thu Jul 10 2025 Pavol Žáčik <pzacik@redhat.com> - 3.0.5-10
+- Fix cryptographic agility issues
+  Resolves: RHEL-99533
+
+* Tue Oct 29 2024 Troy Dawson <tdawson@redhat.com> - 3.0.5-9
+- Bump release for October 2024 mass rebuild:
+  Resolves: RHEL-64018
+
+* Tue Aug 20 2024 Tomas Korbar <tkorbar@redhat.com> - 3.0.5-8
 - Fix FEAT command to list AUTH TLS when TLSv1.3 is enabled
-- Resolves: RHEL-45022
+- Resolves: RHEL-54726
 
-* Thu Apr 27 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-5
+* Mon Jun 24 2024 Troy Dawson <tdawson@redhat.com> - 3.0.5-7
+- Bump release for June 2024 mass rebuild
+
+* Sat Jan 27 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.5-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sat Jul 22 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.5-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Thu May 04 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-4
 - add option for TLSv1.3 ciphersuites
-- Resolves: rhbz#2188296
- 
-* Mon Feb 13 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-4
-- add patch to replace deprecated Openssl functions 
-- Resolves: rhbz#1981411
+- SPDX migration
 
-* Mon Feb 06 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-3
-- add patch to replace old network functions 
-- Resolves: rhbz#1951545
+* Fri Feb 17 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-3
+- make vsftpd compatible with Openssl 3.0+
+- replace old network functions
 
-* Fri Nov 11 2022 Richard Lescak <rlescak@redhat.com> - 3.0.5-2
-- reintroduce patch for support of wide-character strings in logs
-- Related: rhbz#2018284
+* Sat Jan 21 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.5-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
 
-* Wed Oct 26 2022 Richard Lescak <rlescak@redhat.com> - 3.0.5-1
-- rebase to version 3.0.5 
-- Resolves: rhbz#2018284
+* Thu Jul 28 2022 Richard Lescak <rlescak@redhat.com> 3.0.5-1
+- rebase to version 3.0.5
+
+* Sat Jul 23 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-51
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Sat Jan 22 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-50
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
 
 * Wed Oct 27 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-49
 - add option to disable TLSv1.3
-- Resolves: rhbz#1954682
+- Resolves: rhbz#2017705
 
 * Wed Oct 13 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-48
 - ALPACA fix backported from upstram 3.0.5 version
-- Resolves: rhbz#1975647
+- Resolves: rhbz#1975648
 
-* Tue Aug 10 2021 Mohan Boddu <mboddu@redhat.com> - 3.0.3-47
-- Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
-  Related: rhbz#1991688
-
-* Wed Jun 16 2021 Mohan Boddu <mboddu@redhat.com> - 3.0.3-46
-- Rebuilt for RHEL 9 BETA for openssl 3.0
-  Related: rhbz#1971065
-
-* Thu May 20 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-45
+* Wed Oct 13 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-47
 - Temporary pass -Wno-deprecated-declarations to gcc to ignore
   deprecated warnings to be able to build against OpenSSL-3.0
-- Resolves: rhbz#1958028
+- Resolves: rhbz#1962603
 
-* Fri Apr 16 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-44
+* Tue Sep 14 2021 Sahana Prasad <sahana@redhat.com> - 3.0.3-46
+- Rebuilt with OpenSSL 3.0.0
+
+* Fri Jul 23 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-45
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Thu Apr 8 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-44
 - Enable support for wide-character strings in logs
 - Replace unprintables with HEX code, not question marks
-- Resolves: rhbz#1948570
 
-* Fri Apr 16 2021 Mohan Boddu <mboddu@redhat.com> - 3.0.3-43
-- Rebuilt for RHEL 9 BETA on Apr 15th 2021. Related: rhbz#1947937
+* Tue Mar 02 2021 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 3.0.3-43
+- Rebuilt for updated systemd-rpm-macros
+  See https://pagure.io/fesco/issue/2583.
 
 * Wed Jan 27 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-42
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
