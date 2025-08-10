@@ -1,12 +1,11 @@
 %global _generatorsdir %{_prefix}/lib/systemd/system-generators
 
 Name:    vsftpd
-Version: 3.0.3
-Release: 28%{?dist}
+Version: 3.0.5
+Release: 6%{?dist}
 Summary: Very Secure Ftp Daemon
-Epoch:   1
+Epoch: 1
 
-Group:    System Environment/Daemons
 # OpenSSL link exception
 License:  GPLv2 with exceptions
 URL:      https://security.appspot.com/vsftpd.html
@@ -21,6 +20,7 @@ Source8:  vsftpd@.service
 Source9:  vsftpd.target
 Source10: vsftpd-generator
 
+BuildRequires: make
 BuildRequires: pam-devel
 BuildRequires: libcap-devel
 BuildRequires: openssl-devel
@@ -62,9 +62,7 @@ Patch29: 0029-Fix-segfault-in-config-file-parser.patch
 Patch30: 0030-Fix-logging-into-syslog-when-enabled-in-config.patch
 Patch31: 0031-Fix-question-mark-wildcard-withing-a-file-name.patch
 Patch32: 0032-Propagate-errors-from-nfs-with-quota-to-client.patch
-Patch33: 0033-Introduce-TLSv1.1-and-TLSv1.2-options.patch
 Patch34: 0034-Turn-off-seccomp-sandbox-because-it-is-too-strict.patch
-Patch35: 0035-Modify-DH-enablement-patch-to-build-with-OpenSSL-1.1.patch
 Patch36: 0036-Redefine-VSFTP_COMMAND_FD-to-1.patch
 Patch37: 0037-Document-the-relationship-of-text_userdb_names-and-c.patch
 Patch38: 0038-Document-allow_writeable_chroot-in-the-man-page.patch
@@ -72,7 +70,6 @@ Patch39: 0039-Improve-documentation-of-ASCII-mode-in-the-man-page.patch
 Patch40: 0040-Use-system-wide-crypto-policy.patch
 Patch41: 0041-Document-the-new-default-for-ssl_ciphers-in-the-man-.patch
 Patch42: 0042-When-handling-FEAT-command-check-ssl_tlsv1_1-and-ssl.patch
-Patch43: 0043-Enable-only-TLSv1.2-by-default.patch
 Patch44: 0044-Disable-anonymous_enable-in-default-config-file.patch
 Patch45: 0045-Expand-explanation-of-ascii_-options-behaviour-in-ma.patch
 Patch46: 0046-vsftpd.conf-Refer-to-the-man-page-regarding-the-asci.patch
@@ -89,6 +86,20 @@ Patch56: 0056-Log-die-calls-to-syslog.patch
 Patch57: 0057-Improve-error-message-when-max-number-of-bind-attemp.patch
 Patch58: 0058-Make-the-max-number-of-bind-retries-tunable.patch
 Patch59: 0059-Fix-SEGFAULT-when-running-in-a-container-as-PID-1.patch
+Patch61: 0001-Move-closing-standard-FDs-after-listen.patch
+Patch62: 0002-Prevent-recursion-in-bug.patch
+Patch63: 0001-Set-s_uwtmp_inserted-only-after-record-insertion-rem.patch
+Patch64: 0002-Repeat-pututxline-if-it-fails-with-EINTR.patch
+Patch65: 0001-Repeat-pututxline-until-it-succeeds-if-it-fails-with.patch
+Patch67: 0001-Fix-timestamp-handling-in-MDTM.patch
+Patch68: 0002-Drop-an-unused-global-variable.patch
+Patch69: 0001-Remove-a-hint-about-the-ftp_home_dir-SELinux-boolean.patch
+Patch70: fix-str_open.patch
+Patch71: vsftpd-3.0.3-enable_wc_logs-replace_unprintable_with_hex.patch
+Patch72: vsftpd-3.0.5-use-old-tlsv-options.patch
+Patch73: vsftpd-3.0.5-replace-old-network-addr-functions.patch
+Patch74: vsftpd-3.0.5-replace-deprecated-openssl-functions.patch
+Patch75: vsftpd-3.0.5-add-option-for-tlsv1.3-ciphersuites.patch
 Patch99: 0099-Preserve-Original-Username.patch
 
 %description
@@ -100,12 +111,13 @@ scratch.
 cp %{SOURCE1} .
 
 %build
+
 %ifarch s390x sparcv9 sparc64
-make CFLAGS="$RPM_OPT_FLAGS -fPIE -pipe -Wextra -Werror" \
+%make_build CFLAGS="$RPM_OPT_FLAGS -fPIE -pipe -Wextra -Werror" \
 %else
-make CFLAGS="$RPM_OPT_FLAGS -fpie -pipe -Wextra -Werror" \
+%make_build CFLAGS="$RPM_OPT_FLAGS -fpie -pipe -Wextra -Werror" \
 %endif
-        LINK="-pie -lssl" %{?_smp_mflags}
+        LINK="-pie -lssl $RPM_LD_FLAGS" %{?_smp_mflags}
 
 %install
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}
@@ -158,6 +170,109 @@ mkdir -p $RPM_BUILD_ROOT/%{_var}/ftp/pub
 %{_var}/ftp
 
 %changelog
+* Tue Aug 20 2024 Tomas Korbar <tkorbar@redhat.com> - 3.0.5-6
+- Fix FEAT command to list AUTH TLS when TLSv1.3 is enabled
+- Resolves: RHEL-45022
+
+* Thu Apr 27 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-5
+- add option for TLSv1.3 ciphersuites
+- Resolves: rhbz#2188296
+ 
+* Mon Feb 13 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-4
+- add patch to replace deprecated Openssl functions 
+- Resolves: rhbz#1981411
+
+* Mon Feb 06 2023 Richard Lescak <rlescak@redhat.com> - 3.0.5-3
+- add patch to replace old network functions 
+- Resolves: rhbz#1951545
+
+* Fri Nov 11 2022 Richard Lescak <rlescak@redhat.com> - 3.0.5-2
+- reintroduce patch for support of wide-character strings in logs
+- Related: rhbz#2018284
+
+* Wed Oct 26 2022 Richard Lescak <rlescak@redhat.com> - 3.0.5-1
+- rebase to version 3.0.5 
+- Resolves: rhbz#2018284
+
+* Wed Oct 27 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-49
+- add option to disable TLSv1.3
+- Resolves: rhbz#1954682
+
+* Wed Oct 13 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-48
+- ALPACA fix backported from upstram 3.0.5 version
+- Resolves: rhbz#1975647
+
+* Tue Aug 10 2021 Mohan Boddu <mboddu@redhat.com> - 3.0.3-47
+- Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
+  Related: rhbz#1991688
+
+* Wed Jun 16 2021 Mohan Boddu <mboddu@redhat.com> - 3.0.3-46
+- Rebuilt for RHEL 9 BETA for openssl 3.0
+  Related: rhbz#1971065
+
+* Thu May 20 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-45
+- Temporary pass -Wno-deprecated-declarations to gcc to ignore
+  deprecated warnings to be able to build against OpenSSL-3.0
+- Resolves: rhbz#1958028
+
+* Fri Apr 16 2021 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-44
+- Enable support for wide-character strings in logs
+- Replace unprintables with HEX code, not question marks
+- Resolves: rhbz#1948570
+
+* Fri Apr 16 2021 Mohan Boddu <mboddu@redhat.com> - 3.0.3-43
+- Rebuilt for RHEL 9 BETA on Apr 15th 2021. Related: rhbz#1947937
+
+* Wed Jan 27 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-42
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Fri Nov 27 2020 Timm Bäder<tbaeder@redhat.com> - 3.0.3-41
+- Fix str_open() so it doesn't warn when compiled with clang
+- Pass $RPM_LD_FLAGS when linking
+
+* Mon Nov 02 2020 Artem Egorenkov <aegorenk@redhat.com> - 3.0.3-40
+- Unit files fixed "After=network-online.target"
+
+* Wed Jul 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-39
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Tue Mar 17 2020 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-38
+- Removed a hint about the ftp_home_dir SELinux boolean from the config file
+- Resolves: rhbz#1623424
+
+* Thu Feb 13 2020 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-37
+- Fix timestamp handling in MDTM
+- Resolves: rhbz#1567855
+
+* Fri Feb 07 2020 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-36
+- Fix build with gcc 10
+- Resolves: rhbz#1800239
+
+* Fri Jan 31 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-35
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
+* Fri Jan 17 2020 Tom Stellard <tstellar@redhat.com> - 3.0.3-34
+- Use make_build macro
+
+* Thu Nov 28 2019 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-33
+- Finish up the fix to the problem with bad utmp entries when pututxline() fails
+- Resolves: rhbz#1688852
+- Resolves: rhbz#1737433
+
+* Mon Aug 05 2019 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-32
+- Partially fix problem with bad utmp entries when pututxline() fails
+- Resolves: rhbz#1688848
+
+* Sat Aug 03 2019 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-31
+- Fix segfault when listen() returns an error
+- Resolves: rhbz#1666380
+
+* Sat Jul 27 2019 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-30
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.3-29
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
 * Wed Jul 25 2018 Ondřej Lysoněk <olysonek@redhat.com> - 3.0.3-28
 - Rebuilt, switched to SHA512 source tarball hash
 
